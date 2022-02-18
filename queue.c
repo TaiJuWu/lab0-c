@@ -15,6 +15,9 @@
  * Create empty queue.
  * Return NULL if could not allocate space.
  */
+
+static int size = 0;
+
 struct list_head *q_new()
 {
     struct list_head *head = malloc(sizeof(struct list_head));
@@ -26,7 +29,20 @@ struct list_head *q_new()
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *head)
+{
+    if (!head) {
+        return;
+    }
+
+    element_t *node, *next;
+    list_for_each_entry_safe (node, next, head, list) {
+        list_del(&node->list);
+        free(node->value);
+        free(node);
+    }
+    free(head);
+}
 
 /*
  * Attempt to insert element at head of queue.
@@ -55,11 +71,8 @@ bool q_insert_head(struct list_head *head, char *s)
     memset(newh->value, 0, str_len);
     strncpy(newh->value, s, str_len);
 
-    // if(head->prev == head){
-    //     head->prev = &(newh->list);
-    // }
-    // newh->list.next = head->next;
     list_add(&newh->list, head);
+    size += 1;
     return true;
 }
 
@@ -72,6 +85,27 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head) {
+        return false;
+    }
+    element_t *newt = malloc(sizeof(element_t));
+    if (!newt) {
+        return false;
+    }
+    memset(newt, 0, sizeof(element_t));
+
+    int str_len = (strlen(s) + 1) * sizeof(char);
+    newt->value = malloc(str_len);
+    if (!newt->value) {
+        free(newt);
+        return false;
+    }
+    memset(newt->value, 0, str_len);
+    strncpy(newt->value, s, str_len);
+
+    list_add_tail(&newt->list, head);
+    size += 1;
+
     return true;
 }
 
@@ -102,6 +136,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         strncpy(sp, node->value, strlen(node->value));
     }
 
+    size -= 1;
     return node;
 }
 
@@ -111,7 +146,18 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    if (!head || list_empty(head)) {
+        return NULL;
+    }
+
+    element_t *node = list_entry(head->prev, element_t, list);
+    list_del(head->prev);
+    if (sp && bufsize) {
+        memset(sp, 0, bufsize);
+        strncpy(sp, node->value, strlen(node->value));
+    }
+    size -= 1;
+    return node;
 }
 
 /*
@@ -130,7 +176,7 @@ void q_release_element(element_t *e)
  */
 int q_size(struct list_head *head)
 {
-    return -1;
+    return size;
 }
 
 /*
