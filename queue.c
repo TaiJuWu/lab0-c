@@ -18,6 +18,11 @@
 
 static int size = 0;
 
+static int compare(char *s, char *t)
+{
+    return strcmp(s, t);
+}
+
 struct list_head *q_new()
 {
     struct list_head *head = malloc(sizeof(struct list_head));
@@ -216,6 +221,21 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (!head || list_empty(head)) {
+        return false;
+    }
+
+    element_t *node = NULL, *next = NULL;
+    char *prev_str = "";
+    list_for_each_entry_safe (node, next, head, list) {
+        if (!compare(prev_str, node->value)) {
+            list_del(&node->list);
+            q_release_element(node);
+        } else {
+            prev_str = node->value;
+        }
+    }
+
     return true;
 }
 
@@ -269,10 +289,6 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-int compare(char *s, char *t)
-{
-    return strcmp(s, t);
-}
 
 // void merge_sort(struct list_haed *head) {
 //     if(list_empty(head) || list_is_singular(head)){
