@@ -225,6 +225,20 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || list_empty(head) || list_is_singular(head)) {
+        return;
+    }
+    struct list_head *ptr = head->next;
+    while (ptr != head && ptr->next != head) {
+        element_t *tmp1 = list_entry(ptr, element_t, list);
+        element_t *tmp2 = list_entry(ptr->next, element_t, list);
+
+        char *tmp = tmp1->value;
+        tmp1->value = tmp2->value;
+        tmp2->value = tmp;
+
+        ptr = ptr->next->next;
+    }
 }
 
 /*
@@ -255,4 +269,55 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+int compare(char *s, char *t)
+{
+    return strcmp(s, t);
+}
+
+// void merge_sort(struct list_haed *head) {
+//     if(list_empty(head) || list_is_singular(head)){
+//         return;
+//     }
+
+//     struct list_head *slow = head, *fast = head;
+// }
+
+// void merge(struct list_head *left, struct list_head *right) {}
+
+static void list_qsort(struct list_head *head)
+{
+    if (list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head list_less, list_greater;
+    element_t *pivot;
+    element_t *item = NULL, *is = NULL;
+
+    INIT_LIST_HEAD(&list_less);
+    INIT_LIST_HEAD(&list_greater);
+
+    pivot = list_first_entry(head, element_t, list);
+    list_del(&pivot->list);
+
+    list_for_each_entry_safe (item, is, head, list) {
+        if (compare(item->value, pivot->value) < 0)
+            list_move_tail(&item->list, &list_less);
+        else
+            list_move(&item->list, &list_greater);
+    }
+
+    list_qsort(&list_less);
+    list_qsort(&list_greater);
+
+    list_add(&pivot->list, head);
+    list_splice(&list_less, head);
+    list_splice_tail(&list_greater, head);
+}
+
+void q_sort(struct list_head *head)
+{
+    if (!head || list_empty(head)) {
+        return;
+    }
+    list_qsort(head);
+}
