@@ -114,6 +114,19 @@ bool q_insert_tail(struct list_head *head, char *s)
     return true;
 }
 
+element_t *q_remove(struct list_head *ele, char *sp, size_t bufsize)
+{
+    element_t *node = list_entry(ele, element_t, list);
+    list_del_init(ele);
+    if (sp && bufsize) {
+        memset(sp, 0, bufsize);
+        strncpy(sp, node->value, bufsize - 1);
+    }
+
+    size -= 1;
+    return node;
+}
+
 /*
  * Attempt to remove element from head of queue.
  * Return target element.
@@ -134,15 +147,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
     }
 
-    element_t *node = list_entry(head->next, element_t, list);
-    list_del(head->next);
-    if (sp && bufsize) {
-        memset(sp, 0, bufsize);
-        strncpy(sp, node->value, bufsize - 1);
-    }
-
-    size -= 1;
-    return node;
+    return q_remove(head->next, sp, bufsize);
 }
 
 /*
@@ -155,14 +160,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
     }
 
-    element_t *node = list_entry(head->prev, element_t, list);
-    list_del(head->prev);
-    if (sp && bufsize) {
-        memset(sp, 0, bufsize);
-        strncpy(sp, node->value, bufsize - 1);
-    }
-    size -= 1;
-    return node;
+    return q_remove(head->prev, sp, bufsize);
 }
 
 /*
