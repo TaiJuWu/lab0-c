@@ -133,7 +133,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
     list_del(head->next);
     if (sp && bufsize) {
         memset(sp, 0, bufsize);
-        strncpy(sp, node->value, strlen(node->value));
+        strncpy(sp, node->value, bufsize - 1);
     }
 
     size -= 1;
@@ -154,7 +154,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
     list_del(head->prev);
     if (sp && bufsize) {
         memset(sp, 0, bufsize);
-        strncpy(sp, node->value, strlen(node->value));
+        strncpy(sp, node->value, bufsize - 1);
     }
     size -= 1;
     return node;
