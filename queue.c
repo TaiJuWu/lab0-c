@@ -18,10 +18,17 @@
 
 static int size = 0;
 
-static int compare(char *s, char *t)
+static int compareStr(char *s, char *t)
 {
     return strcmp(s, t);
 }
+
+static int compareEle(struct list_head *e1, struct list_head *e2)
+{
+    return compareStr(list_entry(e1, element_t, list)->value,
+                      list_entry(e2, element_t, list)->value);
+}
+
 
 struct list_head *q_new()
 {
@@ -219,19 +226,29 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-    if (!head || list_empty(head)) {
+    if (!head || list_empty(head) || list_is_singular(head)) {
         return false;
     }
 
-    element_t *node = NULL, *next = NULL;
-    char *prev_str = "";
-    list_for_each_entry_safe (node, next, head, list) {
-        if (!compare(prev_str, node->value)) {
-            list_del(&node->list);
-            q_release_element(node);
-        } else {
-            prev_str = node->value;
+    struct list_head *node = head->next, *next = head->next->next;
+    struct list_head *tmp = NULL;
+    while (node != head && next != head) {
+        if (!compareEle(node, next)) {
+            // delete multiple same word nodes
+            while (next != head && !compareEle(node, next)) {
+                tmp = next->next;
+                list_del(next);
+                q_release_element(list_entry(next, element_t, list));
+                next = tmp;
+            }
+            // delete first node
+            struct list_head *prev = node->prev;
+            list_del(node);
+            q_release_element(list_entry(node, element_t, list));
+            node = prev;
         }
+        node = node->next;
+        next = node->next;
     }
 
     return true;
@@ -295,8 +312,7 @@ struct list_head *mergeTwoList(struct list_head *left, struct list_head *right)
     memset(prev, 0, sizeof(struct list_head));
 
     while (left && right) {
-        if (compare(list_entry(left, element_t, list)->value,
-                    list_entry(right, element_t, list)->value) < 0) {
+        if (compareEle(left, right) < 0) {
             prev->next = left;
             left = left->next;
         } else {
