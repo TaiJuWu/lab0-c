@@ -288,50 +288,59 @@ void q_reverse(struct list_head *head)
  * element, do nothing.
  */
 
-// void merge_sort(struct list_haed *head) {
-//     if(list_empty(head) || list_is_singular(head)){
-//         return;
-//     }
-
-//     struct list_head *slow = head, *fast = head;
-// }
-
-// void merge(struct list_head *left, struct list_head *right) {}
-
-static void list_qsort(struct list_head *head)
+struct list_head *mergeTwoList(struct list_head *left, struct list_head *right)
 {
-    if (list_empty(head) || list_is_singular(head))
-        return;
+    struct list_head dummy;
+    struct list_head *prev = &dummy;
+    memset(prev, 0, sizeof(struct list_head));
 
-    struct list_head list_less, list_greater;
-    element_t *pivot;
-    element_t *item = NULL, *is = NULL;
+    while (left && right) {
+        if (compare(list_entry(left, element_t, list)->value,
+                    list_entry(right, element_t, list)->value) < 0) {
+            prev->next = left;
+            left = left->next;
+        } else {
+            prev->next = right;
+            right = right->next;
+        }
+        prev = prev->next;
+    }
+    prev->next = left ? left : right;
 
-    INIT_LIST_HEAD(&list_less);
-    INIT_LIST_HEAD(&list_greater);
+    return dummy.next;
+}
 
-    pivot = list_first_entry(head, element_t, list);
-    list_del(&pivot->list);
 
-    list_for_each_entry_safe (item, is, head, list) {
-        if (compare(item->value, pivot->value) < 0)
-            list_move_tail(&item->list, &list_less);
-        else
-            list_move(&item->list, &list_greater);
+struct list_head *merge_sort(struct list_head *head)
+{
+    if (!head || !head->next) {
+        return head;
     }
 
-    list_qsort(&list_less);
-    list_qsort(&list_greater);
+    struct list_head *slow = head, *fast = head->next;
+    for (; fast && fast->next; fast = fast->next->next) {
+        slow = slow->next;
+    }
+    fast = slow->next;
+    slow->next = NULL;
 
-    list_add(&pivot->list, head);
-    list_splice(&list_less, head);
-    list_splice_tail(&list_greater, head);
+    return mergeTwoList(merge_sort(head), merge_sort(fast));
 }
+
 
 void q_sort(struct list_head *head)
 {
     if (!head || list_empty(head)) {
         return;
     }
-    list_qsort(head);
+    head->prev->next = NULL;
+    head->next = merge_sort(head->next);
+
+    struct list_head *prev = head, *curr = head->next;
+    for (; curr; prev = curr, curr = curr->next) {
+        curr->prev = prev;
+    }
+
+    head->prev = prev;
+    prev->next = head;
 }
